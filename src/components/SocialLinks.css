@@ -1,0 +1,49 @@
+.social-links {
+  padding: 4rem 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.links-container {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.link-item {
+  padding: 0.8rem 1.5rem;
+  border-radius: 30px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.link-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.youtube {
+  background: rgba(255, 0, 0, 0.15);
+  color: #ff4e4e;
+}
+
+.x {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.niconico {
+  background: rgba(35, 35, 35, 0.6);
+  color: #fff;
+}
+
+.copyright {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}

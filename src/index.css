@@ -1,0 +1,91 @@
+:root {
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #050b18;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+}
+
+#root {
+  width: 100%;
+}
+
+/* Star background animation */
+.stars-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: twinkle var(--duration) infinite ease-in-out;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.constellation {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 0.1;
+  background-image: radial-gradient(white 1px, transparent 1px);
+  background-size: 100px 100px;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+  color: #e2e8f0;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+section {
+  padding: 4rem 2rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
