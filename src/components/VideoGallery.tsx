@@ -9,6 +9,13 @@ const videos = [
   { id: 'oAN61yELIuo', title: '『硝子の笛』/ 初音ミク' },
   { id: 'wdgLdP9KHWE', title: '『アニモシティ』/ 初音ミク' },
   { id: 'prEEoDLF64w', title: '『幽天少女』/ 初音ミク, Merrow' },
+  { id: 'F3IIZL-83Dc', title: '"デッドラクター" ／ 初音ミク' },
+  { id: 'BeK9FCVhXsU', title: '"インパルシヴ・リブート" ／ 初音ミク' },
+  { id: 'WVx9O6o713o', title: '"クレイドル" ／ 初音ミク' },
+  { id: 'z1Emzece7go', title: '"あの頃の僕が生きたのはこんな偽物の夏じゃなかった。" ／ 初音ミク' },
+  { id: '5N4cEBZXqGE', title: '"Sync." ／ 初音ミク' },
+  { id: 'f0N4c63ES38', title: '"Daydream" ／ 初音ミク' },
+  { id: 'eNexsdA2GEw', title: '"ワールドリー・シアター" ／ 初音ミク' },
 ];
 
 const VideoGallery: React.FC = () => {
