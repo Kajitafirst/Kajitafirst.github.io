@@ -1,0 +1,11 @@
+length: 16
+n_layers: 3
+on_mps: True
+v_mps: 2
+bs_dis: 64
+bs_gen: 100
+lr_dis: 0.001
+lr_gen: 0.02
+features: 50
+d_steps: 1
+g_steps: 1

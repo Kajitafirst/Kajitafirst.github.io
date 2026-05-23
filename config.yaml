@@ -1,0 +1,10 @@
+epochs: 5000
+save_epoch: 50
+log_epoch: 500
+epsilon: 1.0e-10
+logfile: logfile.log
+accuracy_file: accuracy.npy
+loss_dis_file: loss_dis.npy
+loss_gen_file: loss_gen.npy
+kl_div_file: kl_div.npy
+theta_val_file: theta_val.npy

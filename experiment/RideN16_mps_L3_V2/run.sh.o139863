@@ -1,0 +1,34 @@
+GPU: FOUND - starting
+Traceback (most recent call last):
+  File "/home/qch10171co/qcm/main.py", line 160, in <module>
+    main()
+  File "/home/qch10171co/qcm/main.py", line 103, in main
+    x_fake = numpy_to_gpu(pqc.run())
+                          ^^^^^^^^^
+  File "/home/qch10171co/qcm/model.py", line 97, in run
+    result = self.simulator.run(tpqc, shots=batch_size, memory=True).result()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/qcm/.venv/lib/python3.12/site-packages/qiskit_aer/jobs/utils.py", line 42, in _wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/qcm/.venv/lib/python3.12/site-packages/qiskit_aer/jobs/aerjob.py", line 114, in result
+    return self._future.result(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/home/qch10171co/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/qcm/.venv/lib/python3.12/site-packages/qiskit_aer/backends/aerbackend.py", line 474, in _execute_circuits_job
+    output = self._execute_circuits(aer_circuits, noise_model, config)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/qcm/.venv/lib/python3.12/site-packages/qiskit_aer/backends/aer_simulator.py", line 923, in _execute_circuits
+    ret = cpp_execute_circuits(self._controller, aer_circuits, noise_model, config)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/qch10171co/qcm/.venv/lib/python3.12/site-packages/qiskit_aer/backends/backend_utils.py", line 450, in cpp_execute_circuits
+    return controller.execute(aer_circuits, noise_model, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Simulation device "GPU" is not supported on this system

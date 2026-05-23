@@ -1,0 +1,23 @@
+[project]
+name = "qcm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib==3.8.4",
+    "numpy==1.26.4",
+    "pretty-midi>=0.2.11",
+    "pylatexenc==2.10",
+    "pyyaml==6.0.2",
+    "qiskit==1.2.2",
+    "qiskit-aer==0.14.2",
+    "scipy==1.13.1",
+    "torch==2.7.0",
+    "torchaudio==2.7.0",
+    "torchvision==0.22.0",
+    "tqdm==4.66.4",
+]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cu126"
