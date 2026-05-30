@@ -123,10 +123,14 @@ class CircuitVisualizer {
         this.gridStarField = new StarField(40);
 
         // Generation state
-        this.genEvents = [];       // all events from simulation
         this.genPartName = '';
-        this.genCurrentStep = -1;  // which output-bit step we're animating
-        this.genResults = [];      // measurement results so far
+        this.genEvents = [];       // all events for current part
+        this.genPattern = [];      // target pattern for current part
+        this.genTime = 0;          // current continuous time in generation
+        this.genStepDuration = 0.08; // seconds per step
+        this.genSpeed = 600;       // pixels per second for scrolling
+        this.nextMeasureStep = 0;  // next step index to trigger measurement
+        this.genOnComplete = null;
 
         // Playback state
         this.patterns = {};        // { part: number[] } flat arrays
@@ -178,6 +182,30 @@ class CircuitVisualizer {
 
         this._drawCircuitCanvas(dt);
         this._drawGridCanvas(dt);
+
+        // Update generating logic
+        if (this.mode === 'generating') {
+            this.genTime += dt;
+            
+            // Check if any step has crossed the measurement line
+            while (this.nextMeasureStep < this.genPattern.length) {
+                const stepArrivalTime = this.nextMeasureStep * this.genStepDuration;
+                if (this.genTime >= stepArrivalTime) {
+                    this._triggerMeasurement(this.nextMeasureStep);
+                    this.nextMeasureStep++;
+                } else {
+                    break;
+                }
+            }
+
+            // Check if part generation is complete (wait a bit after last step)
+            const endTime = this.genPattern.length * this.genStepDuration + 0.5;
+            if (this.genTime >= endTime && this.genOnComplete) {
+                const completeFn = this.genOnComplete;
+                this.genOnComplete = null;
+                completeFn();
+            }
+        }
 
         // Update particles
         this.particles = this.particles.filter(p => p.alive);
@@ -264,19 +292,19 @@ class CircuitVisualizer {
     _drawGenerationView(ctx, w, h, dt) {
         const nq = this.nQubits;
         const margin = 40;
-        const wireSpacing = (h * 0.65 - 2 * margin) / (nq + 1);
-        const measureLineX = margin + 50;
+        const wireSpacing = (h * 0.7 - 2 * margin) / (nq + 1);
+        const measureLineX = w - 100; // Measurement line on the right
 
         // Draw qubit wires
         for (let i = 0; i < nq; i++) {
             const y = margin + wireSpacing * (i + 1);
-            const grad = ctx.createLinearGradient(measureLineX, y, w - 30, y);
-            grad.addColorStop(0, 'rgba(0, 229, 255, 0.3)');
-            grad.addColorStop(1, 'rgba(100, 120, 255, 0.06)');
+            const grad = ctx.createLinearGradient(30, y, measureLineX, y);
+            grad.addColorStop(0, 'rgba(100, 120, 255, 0.06)');
+            grad.addColorStop(1, 'rgba(0, 229, 255, 0.4)');
             ctx.strokeStyle = grad;
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            ctx.moveTo(measureLineX, y);
+            ctx.moveTo(30, y);
             ctx.lineTo(w - 30, y);
             ctx.stroke();
 
@@ -287,90 +315,85 @@ class CircuitVisualizer {
 
         // Measurement line
         ctx.save();
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.6)';
         ctx.lineWidth = 2;
+        ctx.shadowColor = '#00e5ff';
+        ctx.shadowBlur = 10;
         ctx.setLineDash([6, 4]);
         ctx.beginPath();
         ctx.moveTo(measureLineX, margin);
-        ctx.lineTo(measureLineX, h * 0.65);
+        ctx.lineTo(measureLineX, h * 0.7);
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.restore();
 
-        ctx.fillStyle = 'rgba(0, 229, 255, 0.5)';
-        ctx.font = '9px "JetBrains Mono", monospace';
-        ctx.fillText('MEASURE', measureLineX - 22, margin - 8);
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.8)';
+        ctx.font = 'bold 10px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('MEASURE', measureLineX, margin - 12);
+        ctx.textAlign = 'left';
 
-        // Draw gate events flowing for current step
-        if (this.genCurrentStep >= 0 && this.genEvents.length > 0) {
-            const stepEvents = this.genEvents.filter(e => e.step === this.genCurrentStep && e.type !== 'measure' && e.type !== 'x');
-            const totalGates = stepEvents.length;
-            const gateWidth = 32;
-            const startX = measureLineX + 40;
-            const endX = w - 50;
-            const availableWidth = endX - startX;
+        // Draw gates flowing from left to right
+        const gateWidth = 28;
+        const bh = 20;
 
-            for (let g = 0; g < totalGates; g++) {
-                const evt = stepEvents[g];
-                const t = totalGates > 1 ? g / (totalGates - 1) : 0.5;
-                const x = startX + t * availableWidth;
-                const y = margin + wireSpacing * (evt.qubit + 1);
-                const color = GATE_COLORS[evt.type] || '#ffffff';
+        for (const evt of this.genEvents) {
+            if (evt.type === 'measure' || evt.type === 'x') continue;
 
-                // Gate box
+            // Calculate x position based on time
+            const stepArrivalTime = evt.step * this.genStepDuration;
+            // Distribute gates within a step slightly
+            const gateOffset = evt.type === 'rz' ? 0.2 : (evt.type === 'rx' ? 0.5 : 0.8);
+            const gateArrivalTime = stepArrivalTime - (1 - gateOffset) * this.genStepDuration;
+
+            const timeDiff = gateArrivalTime - this.genTime;
+            const x = measureLineX - timeDiff * this.genSpeed;
+
+            // Only draw if on screen
+            if (x < -50 || x > w + 50) continue;
+
+            const y = margin + wireSpacing * (evt.qubit + 1);
+            const color = GATE_COLORS[evt.type] || '#ffffff';
+
+            ctx.save();
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = color + '33';
+            ctx.strokeStyle = color + '88';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(x - gateWidth / 2, y - bh / 2, gateWidth, bh, 4);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = color;
+            ctx.font = 'bold 9px "JetBrains Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(evt.type.toUpperCase(), x, y + 3);
+            ctx.textAlign = 'left';
+            ctx.restore();
+
+            if (evt.type === 'cp' && evt.target !== undefined) {
+                const y2 = margin + wireSpacing * (evt.target + 1);
                 ctx.save();
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 8;
-                ctx.fillStyle = color + '33';
-                ctx.strokeStyle = color + '88';
+                ctx.strokeStyle = color + '66';
                 ctx.lineWidth = 1;
-                const bw = gateWidth;
-                const bh = 20;
                 ctx.beginPath();
-                ctx.roundRect(x - bw / 2, y - bh / 2, bw, bh, 4);
-                ctx.fill();
+                ctx.moveTo(x, y + bh / 2);
+                ctx.lineTo(x, y2 - bh / 2);
                 ctx.stroke();
-
-                // Gate label
-                ctx.shadowBlur = 0;
-                ctx.fillStyle = color;
-                ctx.font = 'bold 9px "JetBrains Mono", monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText(evt.type.toUpperCase(), x, y + 3);
-                ctx.textAlign = 'left';
                 ctx.restore();
-
-                // CP connecting line
-                if (evt.type === 'cp' && evt.target !== undefined) {
-                    const y2 = margin + wireSpacing * (evt.target + 1);
-                    ctx.save();
-                    ctx.strokeStyle = color + '66';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(x, y + bh / 2);
-                    ctx.lineTo(x, y2 - bh / 2);
-                    ctx.stroke();
-                    ctx.restore();
-                }
             }
         }
 
-        // Draw current step indicator
-        if (this.genCurrentStep >= 0) {
-            ctx.fillStyle = 'rgba(0, 229, 255, 0.8)';
-            ctx.font = 'bold 13px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Step ${this.genCurrentStep + 1}/16`, w / 2, h * 0.65 + 20);
-            ctx.textAlign = 'left';
-
-            // Part label
-            ctx.fillStyle = PART_COLORS[this.genPartName] || '#ffffff';
-            ctx.font = 'bold 12px Inter, sans-serif';
-            ctx.fillText(this.genPartName.toUpperCase(), w - 80, margin - 8);
-        }
-
-        // Draw accumulated results at bottom of circuit area
-        this._drawResultRow(ctx, w, h);
+        // Draw "Generating [Part]..." text at the bottom
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.8)';
+        ctx.font = 'bold 14px "JetBrains Mono", Inter, sans-serif';
+        ctx.textAlign = 'center';
+        const label = PART_LABELS[this.genPartName] || this.genPartName.toUpperCase();
+        ctx.fillText(`${label} を生成中...`, w / 2, h * 0.85);
+        ctx.textAlign = 'left';
 
         // Draw flash effects
         for (const flash of this.flashes) {
@@ -378,59 +401,57 @@ class CircuitVisualizer {
         }
     }
 
-    _drawResultRow(ctx, w, h) {
-        const N = 16;
-        const rowY = h * 0.72;
-        const cellW = Math.min(30, (w - 120) / N);
-        const startX = (w - cellW * N) / 2;
+    _triggerMeasurement(step) {
+        if (step >= this.genPattern.length) return;
+        
+        const result = this.genPattern[step];
+        const measureLineX = this.cW - 100;
+        const wireY = 40 + ((this.cH * 0.7 - 80) / 4); // roughly q[0] wire
 
-        ctx.fillStyle = 'rgba(136, 136, 170, 0.35)';
-        ctx.font = '9px "JetBrains Mono", monospace';
-        ctx.textAlign = 'center';
+        // Update the DAW grid
+        this.patterns[this.genPartName][step] = result;
 
-        for (let i = 0; i < N; i++) {
-            const x = startX + i * cellW + cellW / 2;
-            const y = rowY;
-
-            if (i < this.genResults.length) {
-                const result = this.genResults[i];
-                if (result === 1) {
-                    // Bright glow
-                    ctx.save();
-                    ctx.shadowColor = '#00e5ff';
-                    ctx.shadowBlur = 16;
-                    ctx.fillStyle = '#00e5ff';
-                    ctx.font = 'bold 16px "JetBrains Mono", monospace';
-                    ctx.fillText('1', x, y + 6);
-                    ctx.restore();
-                } else {
-                    ctx.fillStyle = 'rgba(80, 80, 120, 0.5)';
-                    ctx.font = '14px "JetBrains Mono", monospace';
-                    ctx.fillText('0', x, y + 6);
-                }
-            } else {
-                // Pending
-                ctx.fillStyle = 'rgba(60, 60, 90, 0.3)';
-                ctx.fillRect(x - cellW * 0.35, y - 8, cellW * 0.7, 18);
-                ctx.strokeStyle = 'rgba(80, 80, 120, 0.2)';
-                ctx.lineWidth = 0.5;
-                ctx.strokeRect(x - cellW * 0.35, y - 8, cellW * 0.7, 18);
+        // Flash and particles on the circuit canvas
+        if (result === 1) {
+            const color = '#00e5ff';
+            this.flashes.push({ x: measureLineX, y: wireY, result: 1, age: 0, color });
+            
+            // Spawn particles
+            for (let p = 0; p < 15; p++) {
+                const angle = (Math.random() - 0.5) * Math.PI; // burst to the right
+                const speed = 50 + Math.random() * 100;
+                this.particles.push(new Particle(
+                    measureLineX, wireY, color,
+                    1.5 + Math.random() * 2.5,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    0.5 + Math.random() * 0.6
+                ));
             }
+        } else {
+            this.flashes.push({ x: measureLineX, y: wireY, result: 0, age: 0, color: '#334' });
         }
-        ctx.textAlign = 'left';
     }
 
     _drawFlash(ctx, flash) {
         const alpha = Math.max(0, 1 - flash.age);
         const scale = 1 + flash.age * 2;
         ctx.save();
-        ctx.globalAlpha = alpha * 0.6;
+        ctx.globalAlpha = alpha * 0.8;
         ctx.shadowColor = flash.color;
         ctx.shadowBlur = 40 * alpha;
+        
+        // Draw the 0/1 text briefly
+        ctx.fillStyle = flash.color;
+        ctx.font = `bold ${16 * scale}px "JetBrains Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(String(flash.result), flash.x, flash.y - 15 * scale);
+        
+        // Draw ripple ring
         ctx.strokeStyle = flash.color;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(flash.x, flash.y, 15 * scale, 0, Math.PI * 2);
+        ctx.arc(flash.x, flash.y, 20 * scale, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
     }
@@ -673,46 +694,37 @@ class CircuitVisualizer {
     // ============================================================
 
     /**
+     * Prepare visualizer for a multi-part generation process.
+     */
+    initGeneration(activeParts, totalSteps) {
+        this.mode = 'generating';
+        this.activeParts = activeParts;
+        this.patterns = {};
+        for (const part of activeParts) {
+            this.patterns[part] = new Array(totalSteps).fill(0);
+        }
+    }
+
+    /**
      * Start generation animation for a single part.
      * Resolves when animation for this part is complete.
      */
-    async animatePartGeneration(partName, events, pattern, delayPerStep = 80) {
-        this.mode = 'generating';
-        this.genPartName = partName;
-        this.genEvents = events;
-        this.genCurrentStep = -1;
-        this.genResults = [];
-        this.nQubits = 3; // MPS uses 3 qubits
-
-        for (let step = 0; step < pattern.length; step++) {
-            this.genCurrentStep = step;
-            this.genResults.push(pattern[step]);
-
-            // Flash + particles on measurement
-            const measureLineX = 90;
-            const wireY = 40 + ((this.cH * 0.65 - 80) / 4);
-            if (pattern[step] === 1) {
-                const color = '#00e5ff';
-                this.flashes.push({ x: measureLineX, y: wireY, result: 1, age: 0, color });
-                for (let p = 0; p < 12; p++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const speed = 40 + Math.random() * 80;
-                    this.particles.push(new Particle(
-                        measureLineX, wireY, color,
-                        1.5 + Math.random() * 2,
-                        Math.cos(angle) * speed,
-                        Math.sin(angle) * speed,
-                        0.6 + Math.random() * 0.5
-                    ));
-                }
-            } else {
-                this.flashes.push({ x: measureLineX, y: wireY, result: 0, age: 0, color: '#334' });
-            }
-
-            await this._delay(delayPerStep);
-        }
-
-        this.genCurrentStep = -1;
+    animatePartGeneration(partName, events, pattern, delayPerStep = 0.04) {
+        return new Promise(resolve => {
+            this.mode = 'generating';
+            this.genPartName = partName;
+            this.genEvents = events;
+            this.genPattern = pattern;
+            this.genStepDuration = delayPerStep;
+            this.genSpeed = 600; // pixels per sec
+            this.genTime = 0;
+            this.nextMeasureStep = 0;
+            this.nQubits = 3; // MPS uses 3 qubits
+            this.genOnComplete = resolve;
+            
+            // clear the grid row for this part, we will fill it dynamically
+            this.patterns[partName].fill(0);
+        });
     }
 
     /**

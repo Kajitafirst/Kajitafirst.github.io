@@ -164,6 +164,9 @@
 
         state.patterns = {};
         const allEvents = {};
+        const totalSteps = state.measures * 16;
+        
+        visualizer.initGeneration(state.activeParts, totalSteps);
 
         // Generate pattern for each selected part
         for (const part of state.activeParts) {
@@ -194,12 +197,12 @@
             state.patterns[part] = flatPattern;
             allEvents[part] = allPartEvents;
 
-            // Animate this part's generation (only show first measure for speed)
+            // Animate this part's generation for ALL measures
             await visualizer.animatePartGeneration(
                 part,
-                allPartEvents.filter(e => e.step < partConfig.N),
-                measurePatterns[0],
-                60
+                allPartEvents,
+                flatPattern,
+                0.04 // 40ms per step
             );
         }
 
