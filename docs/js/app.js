@@ -153,7 +153,11 @@
         state.isGenerating = true;
         const btn = $('#generate-btn');
         btn.classList.add('generating');
-        btn.innerHTML = '<span class="spinner"></span> Generating...';
+        btn.replaceChildren();
+        const spinner = document.createElement('span');
+        spinner.className = 'spinner';
+        btn.appendChild(spinner);
+        btn.appendChild(document.createTextNode(' Generating...'));
         setStatusActive(true);
 
         // Ensure audio context is created (needs user gesture)
@@ -163,7 +167,6 @@
         visualizer.reset();
 
         state.patterns = {};
-        const allEvents = {};
         const totalSteps = state.measures * 16;
         
         visualizer.initGeneration(state.activeParts, totalSteps);
@@ -172,53 +175,52 @@
         for (const part of state.activeParts) {
             const partConfig = state.params[part];
             if (!partConfig) {
-                console.warn(`No params for part: ${part}`);
                 continue;
             }
 
-            updateStatusText(`Generating ${part}...`);
+            updateStatusText('Generating ' + part + '...');
 
             const sim = new PQCSimulator(partConfig);
-            const measurePatterns = [];
-            const allPartEvents = [];
+            const flatPattern = [];
 
-            // Generate one pattern per measure
+            // Generate and animate one measure at a time (16 steps each)
             for (let m = 0; m < state.measures; m++) {
                 const { pattern, events } = sim.run(state.noiseLevel);
-                measurePatterns.push(pattern);
-                allPartEvents.push(...events.map(e => ({
-                    ...e,
-                    step: e.step + m * partConfig.N
-                })));
+                
+                // Animate this measure's 16 measurements
+                await visualizer.animatePartGeneration(
+                    part,
+                    events,
+                    pattern,
+                    0.08 // 80ms per step — visible but fast
+                );
+
+                // Append to the flat pattern
+                flatPattern.push(...pattern);
+
+                // Update the visualizer's full pattern with newly generated measure
+                for (let s = 0; s < pattern.length; s++) {
+                    visualizer.patterns[part][m * 16 + s] = pattern[s];
+                }
             }
 
-            // Flatten pattern
-            const flatPattern = measurePatterns.flat();
             state.patterns[part] = flatPattern;
-            allEvents[part] = allPartEvents;
-
-            // Animate this part's generation for ALL measures
-            await visualizer.animatePartGeneration(
-                part,
-                allPartEvents,
-                flatPattern,
-                0.04 // 40ms per step
-            );
         }
 
         // Set patterns on visualizer
         visualizer.setPatterns(state.patterns, state.activeParts);
-        // Store events for playback circuit view
-        if (state.activeParts.length > 0 && allEvents[state.activeParts[0]]) {
-            visualizer.genEvents = allEvents[state.activeParts[0]];
-        }
 
         // Show playback controls
         $('#playback-controls').style.display = 'flex';
 
         state.isGenerating = false;
         btn.classList.remove('generating');
-        btn.innerHTML = '<span class="btn-icon">⚡</span> Generate';
+        btn.replaceChildren();
+        const icon = document.createElement('span');
+        icon.className = 'btn-icon';
+        icon.textContent = '⚡';
+        btn.appendChild(icon);
+        btn.appendChild(document.createTextNode(' Generate'));
         setStatusActive(false);
         updateStatusText(`Generated — ${state.activeParts.length} parts × ${state.measures} measures`);
     }
