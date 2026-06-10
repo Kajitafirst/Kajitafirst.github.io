@@ -275,7 +275,7 @@ class CircuitVisualizer {
     // ---- Background circuit diagram (static, decorative) ----
     _drawBackgroundCircuit(ctx, w, h, opacity) {
         const nq = 3;
-        const margin = 50;
+        const margin = 60;
         const wireSpacing = (h - 2 * margin) / (nq + 1);
         const phase = this._circuitPhase;
 
@@ -286,9 +286,9 @@ class CircuitVisualizer {
         for (let i = 0; i < nq; i++) {
             const y = margin + wireSpacing * (i + 1);
             const grad = ctx.createLinearGradient(margin, y, w - margin, y);
-            grad.addColorStop(0, 'rgba(100, 120, 255, 0.05)');
-            grad.addColorStop(0.5, 'rgba(100, 120, 255, 0.25)');
-            grad.addColorStop(1, 'rgba(100, 120, 255, 0.05)');
+            grad.addColorStop(0, 'rgba(100, 120, 255, 0.03)');
+            grad.addColorStop(0.5, 'rgba(100, 120, 255, 0.15)');
+            grad.addColorStop(1, 'rgba(100, 120, 255, 0.03)');
             ctx.strokeStyle = grad;
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -297,71 +297,83 @@ class CircuitVisualizer {
             ctx.stroke();
 
             // Qubit label
-            ctx.fillStyle = 'rgba(100, 120, 255, 0.4)';
+            ctx.fillStyle = 'rgba(100, 120, 255, 0.35)';
             ctx.font = '10px "JetBrains Mono", monospace';
             ctx.textAlign = 'left';
-            ctx.fillText('q[' + i + ']', 12, y + 4);
+            ctx.fillText('q[' + i + ']', 16, y + 4);
         }
 
-        // Draw decorative gate blocks along wires
-        const gateTypes = ['RZ', 'RX', 'CP'];
-        const gateColors = ['#4488ff', '#aa44ff', '#00cc88'];
-        const nGates = 14;
-        const gateSpacing = (w - 2 * margin) / (nGates + 1);
+        // Draw a few sparse decorative gate blocks (only 5)
+        const gates = [
+            { type: 'RZ', qubit: 0, pos: 0.18, color: '#4488ff' },
+            { type: 'RX', qubit: 1, pos: 0.35, color: '#aa44ff' },
+            { type: 'CP', qubit: 0, target: 1, pos: 0.52, color: '#00cc88' },
+            { type: 'RZ', qubit: 2, pos: 0.68, color: '#4488ff' },
+            { type: 'RX', qubit: 0, pos: 0.82, color: '#aa44ff' },
+        ];
+        const usableW = w - 2 * margin;
 
-        for (let g = 0; g < nGates; g++) {
-            const gx = margin + gateSpacing * (g + 1);
-            const qubit = g % nq;
-            const gy = margin + wireSpacing * (qubit + 1);
-            const typeIdx = g % gateTypes.length;
-            const color = gateColors[typeIdx];
+        for (const gate of gates) {
+            const gx = margin + usableW * gate.pos;
+            const gy = margin + wireSpacing * (gate.qubit + 1);
+            const color = gate.color;
+            const pulse = 0.35 + 0.15 * Math.sin(phase * 1.5 + gate.pos * 8);
 
-            // Subtle pulsing glow
-            const pulse = 0.3 + 0.15 * Math.sin(phase * 2 + g * 0.7);
-
-            ctx.fillStyle = color + '18';
-            ctx.strokeStyle = color + '44';
-            ctx.lineWidth = 0.8;
+            // Gate box — larger for readability
+            ctx.fillStyle = color + '12';
+            ctx.strokeStyle = color + '33';
+            ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.roundRect(gx - 14, gy - 10, 28, 20, 4);
+            ctx.roundRect(gx - 18, gy - 13, 36, 26, 5);
             ctx.fill();
             ctx.stroke();
 
+            // Gate label
             ctx.fillStyle = color;
             ctx.globalAlpha = opacity * pulse;
-            ctx.font = 'bold 8px "JetBrains Mono", monospace';
+            ctx.font = 'bold 11px "JetBrains Mono", monospace';
             ctx.textAlign = 'center';
-            ctx.fillText(gateTypes[typeIdx], gx, gy + 3);
+            ctx.fillText(gate.type, gx, gy + 4);
             ctx.globalAlpha = opacity;
 
-            // CP connections
-            if (typeIdx === 2 && qubit < nq - 1) {
-                const y2 = margin + wireSpacing * (qubit + 2);
+            // CP connection line
+            if (gate.type === 'CP' && gate.target !== undefined) {
+                const y2 = margin + wireSpacing * (gate.target + 1);
                 ctx.strokeStyle = color + '22';
-                ctx.lineWidth = 0.5;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
                 ctx.beginPath();
-                ctx.moveTo(gx, gy + 10);
-                ctx.lineTo(gx, y2 - 10);
+                ctx.moveTo(gx, gy + 13);
+                ctx.lineTo(gx, y2 - 13);
                 ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Target dot
+                ctx.fillStyle = color + '44';
+                ctx.beginPath();
+                ctx.arc(gx, y2, 4, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
-        // Draw measurement symbols at the right
-        for (let i = 0; i < nq; i++) {
-            const y = margin + wireSpacing * (i + 1);
-            const mx = w - margin - 10;
-            ctx.strokeStyle = 'rgba(0, 229, 255, 0.3)';
-            ctx.lineWidth = 1;
-            // Meter arc
-            ctx.beginPath();
-            ctx.arc(mx, y, 8, Math.PI, 0, false);
-            ctx.stroke();
-            // Needle
-            ctx.beginPath();
-            ctx.moveTo(mx, y);
-            ctx.lineTo(mx + 4, y - 7);
-            ctx.stroke();
-        }
+        // Measurement symbol at the right (only on q[0])
+        const my = margin + wireSpacing;
+        const mx = w - margin - 15;
+        ctx.strokeStyle = 'rgba(0, 229, 255, 0.25)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(mx, my, 10, Math.PI, 0, false);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(mx, my);
+        ctx.lineTo(mx + 5, my - 9);
+        ctx.stroke();
+
+        // "M" label
+        ctx.fillStyle = 'rgba(0, 229, 255, 0.2)';
+        ctx.font = '8px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('M', mx, my + 16);
 
         ctx.restore();
     }
