@@ -192,7 +192,8 @@
                     part,
                     events,
                     pattern,
-                    0.08 // 80ms per step — visible but fast
+                    0.08, // 80ms per step — visible but fast
+                    m * 16 // measureOffset
                 );
 
                 // Append to the flat pattern

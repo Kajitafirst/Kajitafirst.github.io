@@ -48,6 +48,7 @@ class CircuitVisualizer {
         this.genTimer = null;
         this.nextMeasureStep = 0;
         this.genOnComplete = null;
+        this.measureOffset = 0;
 
         // Measurement results: { result: 0|1, revealed: boolean }
         this.measureSlots = [];
@@ -288,6 +289,7 @@ class CircuitVisualizer {
             ctx.fillText('⚡ ' + partLabel + ' 測定中', w / 2, resultsY + 16);
         } else {
             ctx.fillText('✓ 測定完了', w / 2, resultsY + 16);
+            return;
         }
 
         // Slot center row
@@ -399,7 +401,7 @@ class CircuitVisualizer {
         }
 
         // Update the DAW grid in real-time
-        this.patterns[this.genPartName][step] = result;
+        this.patterns[this.genPartName][this.measureOffset + step] = result;
 
         this._requestRedraw();
     }
@@ -661,13 +663,14 @@ class CircuitVisualizer {
      * Uses setInterval instead of rAF loop for timed reveals.
      * Resolves when all 16 measurements are shown.
      */
-    animatePartGeneration(partName, events, pattern, delayPerStep = 0.08) {
+    animatePartGeneration(partName, events, pattern, delayPerStep = 0.08, measureOffset = 0) {
         return new Promise(resolve => {
             this.mode = 'generating';
             this.genPartName = partName;
             this.genPattern = pattern;
             this.nextMeasureStep = 0;
             this.genOnComplete = resolve;
+            this.measureOffset = measureOffset;
 
             // Initialize 16 measurement slots
             this.measureSlots = [];
@@ -678,8 +681,6 @@ class CircuitVisualizer {
                 });
             }
 
-            // Clear the grid row for this part
-            this.patterns[partName].fill(0);
             this._requestRedraw();
 
             // Use setInterval to reveal one measurement at a time
