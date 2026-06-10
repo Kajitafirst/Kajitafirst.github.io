@@ -161,13 +161,15 @@ class CircuitVisualizer {
         // We show a simplified version: RZ, RX, RZ on wires, then CP, then M
 
         const gateColumns = [
-            { x: 0.08, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
-            { x: 0.19, gates: [{q: 0, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'RX', color: '#aa44ff'}] },
-            { x: 0.30, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
-            { x: 0.43, gates: [{q: 0, label: 'CP', color: '#00cc88', target: 1}] },
-            { x: 0.56, gates: [{q: 1, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'CP', color: '#00cc88', target: 2}] },
-            { x: 0.69, gates: [{q: 2, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'CP', color: '#00cc88', target: 0}] },
-            { x: 0.82, gates: [{q: 0, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.05, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
+            { x: 0.15, gates: [{q: 0, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.25, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
+            { x: 0.35, gates: [{q: 0, label: 'CP', color: '#00cc88', target: 1}] },
+            { x: 0.45, gates: [{q: 1, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.55, gates: [{q: 1, label: 'CP', color: '#00cc88', target: 2}] },
+            { x: 0.65, gates: [{q: 2, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.75, gates: [{q: 2, label: 'CP', color: '#00cc88', target: 0}] },
+            { x: 0.85, gates: [{q: 0, label: 'RX', color: '#aa44ff'}] },
         ];
 
         ctx.save();
@@ -238,7 +240,7 @@ class CircuitVisualizer {
         }
 
         // Measurement symbol on q[0]
-        const mx = marginL + usableW * 0.90;
+        const mx = marginL + usableW * 0.97;
         const my = marginT + wireSpacing;
         ctx.strokeStyle = 'rgba(0, 229, 255, 0.5)';
         ctx.lineWidth = 1.5;
