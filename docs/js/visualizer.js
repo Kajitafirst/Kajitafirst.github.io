@@ -161,11 +161,13 @@ class CircuitVisualizer {
         // We show a simplified version: RZ, RX, RZ on wires, then CP, then M
 
         const gateColumns = [
-            { x: 0.10, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
-            { x: 0.25, gates: [{q: 0, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'RX', color: '#aa44ff'}] },
-            { x: 0.40, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
-            { x: 0.58, gates: [{q: 0, label: 'CP', color: '#00cc88', target: 1}, {q: 1, label: 'CP', color: '#00cc88', target: 2}] },
-            { x: 0.73, gates: [{q: 1, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.08, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
+            { x: 0.19, gates: [{q: 0, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'RX', color: '#aa44ff'}] },
+            { x: 0.30, gates: [{q: 0, label: 'RZ', color: '#4488ff'}, {q: 1, label: 'RZ', color: '#4488ff'}, {q: 2, label: 'RZ', color: '#4488ff'}] },
+            { x: 0.43, gates: [{q: 0, label: 'CP', color: '#00cc88', target: 1}] },
+            { x: 0.56, gates: [{q: 1, label: 'RX', color: '#aa44ff'}, {q: 1, label: 'CP', color: '#00cc88', target: 2}] },
+            { x: 0.69, gates: [{q: 2, label: 'RX', color: '#aa44ff'}, {q: 2, label: 'CP', color: '#00cc88', target: 0}] },
+            { x: 0.82, gates: [{q: 0, label: 'RX', color: '#aa44ff'}] },
         ];
 
         ctx.save();
@@ -216,8 +218,14 @@ class CircuitVisualizer {
                     ctx.lineWidth = 1;
                     ctx.setLineDash([3, 3]);
                     ctx.beginPath();
-                    ctx.moveTo(gx, gy + 12);
-                    ctx.lineTo(gx, y2 - 12);
+                    if (gate.target > gate.q) {
+                        ctx.moveTo(gx, gy + 12);
+                        ctx.lineTo(gx, y2 - 12);
+                    } else {
+                        // Draw line upwards for CP(2->0)
+                        ctx.moveTo(gx, gy - 12);
+                        ctx.lineTo(gx, y2 + 12);
+                    }
                     ctx.stroke();
                     ctx.setLineDash([]);
                     // Target dot
