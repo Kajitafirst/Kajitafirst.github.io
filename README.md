@@ -4,11 +4,11 @@
 
 ## 🌐 Demo
 
-GitHub Pages: `https://<username>.github.io/qcm_webapp/`
+GitHub Pages: `https://kajitafirst.github.io/`
 
 ## ✨ Features
 
-- **Suno AI風パラメータUI** — BPM、小節数、パート選択、Quantumノイズ、ベロシティをスライダーで調整
+- **直感的なパラメータUI** — BPM、小節数、パート選択、Quantumノイズをスライダーで調整
 - **ワンクリック生成** — Generateボタンひとつで量子回路がドラムパターンを生成
 - **音ゲー風ビジュアライゼーション** — 量子ゲート（RZ, RX, CP）が流れ、測定時に {0, 1} の結果がグロー表示
 - **Web Audio合成** — 外部サウンドファイル不要、ブラウザ内でドラム音を合成再生
