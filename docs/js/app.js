@@ -22,7 +22,6 @@
         bpm: 120,
         measures: 4,
         noiseLevel: 0,
-        velocity: 0.8,
         isGenerating: false,
         isPlaying: false,
         audioCtx: null,
@@ -88,10 +87,6 @@
         bindSlider('noise-slider', 'noise-value', v => {
             state.noiseLevel = v / 100 * Math.PI * 0.3;
             return (v / 100).toFixed(2);
-        });
-        bindSlider('velocity-slider', 'velocity-value', v => {
-            state.velocity = v / 100;
-            return v;
         });
 
         // Generate button
@@ -257,7 +252,7 @@
         sequencer.start(
             state.patterns,
             state.bpm,
-            state.velocity,
+            0.8,
             (step) => {
                 visualizer.onPlaybackStep(step);
             },
